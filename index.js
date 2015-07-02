@@ -1,26 +1,26 @@
 $(function() {
 
-    $("#demo_rules1").jui_filter_rules({
+    $("#demo_rules").jui_filter_rules({
 
         bootstrap_version: "3",
 
         filters: [
             {
-                filterName: "Lastname", "filterType": "text", field: "lastname", filterLabel: "Last name",
+                filterName: "Lastname", "filterType": "text", field: "lastname", filterLabel: "Text",
                 excluded_operators: ["in", "not_in"],
                 filter_interface: [
                     {
                         filter_element: "input",
-                        filter_element_attributes: {"type": "text", "value": "Smith"}
+                        filter_element_attributes: {"type": "text", "value": "Krauß"}
                     }
                 ]
             },
             {
-                filterName: "AgeInYears", "filterType": "number", "numberType": "double", field: "age", filterLabel: "Age (years)",
+                filterName: "AgeInYears", "filterType": "number", "numberType": "double", field: "age", filterLabel: "Nummer double",
                 excluded_operators: ["in", "not_in"]
             },
             {
-                filterName: "GroupMembers", "filterType": "number", "numberType": "integer", field: "group_members", filterLabel: "Group Members",
+                filterName: "GroupMembers", "filterType": "number", "numberType": "integer", field: "group_members", filterLabel: "Nummer int",
                 excluded_operators: ["in", "not_in"],
                 filter_interface: [
                     {
@@ -40,7 +40,7 @@ $(function() {
                 ]
             },
             {
-                filterName: "PerCentCompleted", "filterType": "number", "numberType": "integer", field: "percent_completed", filterLabel: "PerCent Completed",
+                filterName: "PerCentCompleted", "filterType": "number", "numberType": "integer", field: "percent_completed", filterLabel: "Prozent",
                 excluded_operators: ["in", "not_in"],
                 filter_interface: [
                     {
@@ -69,7 +69,7 @@ $(function() {
                 ]
             },
             {
-                filterName: "DateInserted", "filterType": "date", field: "date_inserted", filterLabel: "Date inserted",
+                filterName: "DateInserted", "filterType": "date", field: "date_inserted", filterLabel: "Datum",
                 excluded_operators: ["in", "not_in"],
                 filter_interface: [
                     {
@@ -95,7 +95,7 @@ $(function() {
                 }
             },
             {
-                filterName: "DateUpdated", "filterType": "date", field: "date_updated", filterLabel: "Datetime updated",
+                filterName: "DateUpdated", "filterType": "date", field: "date_updated", filterLabel: "Datum Update",
                 excluded_operators: ["in", "not_in"],
                 filter_interface: [
                     {
@@ -124,7 +124,7 @@ $(function() {
                 }
             },
             {
-                filterName: "Category", "filterType": "number", "numberType": "integer", field: "category", filterLabel: "Category (ajax data)",
+                filterName: "Category", "filterType": "number", "numberType": "integer", field: "category", filterLabel: "Kategorien (Ajax)",
                 excluded_operators: ["equal", "not_equal", "less", "less_or_equal", "greater", "greater_or_equal"],
                 filter_interface: [
                     {
@@ -133,7 +133,7 @@ $(function() {
                         vertical_orientation: "yes"
                     }
                 ],
-                lookup_values_ajax_url: "ajax/ajax_categories.php"
+                lookup_values_ajax_url: "ajax/kategorien.php"
             },
             {
                 filterName: "Level", "filterType": "number", "numberType": "integer", field: "level", filterLabel: "Level",
@@ -154,7 +154,7 @@ $(function() {
                 ]
             },
             {
-                filterName: "Language", "filterType": "text", field: "language", filterLabel: "Language code (ajax data)",
+                filterName: "Language", "filterType": "text", field: "language", filterLabel: "Sprache Ajax",
                 excluded_operators: ["in", "not_in", "less", "less_or_equal", "greater", "greater_or_equal"],
                 filter_interface: [
                     {
