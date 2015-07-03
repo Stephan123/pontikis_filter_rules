@@ -42,7 +42,7 @@
 	
     <div>
 		<input id="button_get_rules" type="button" value="get Rules">
-        <input id="button_get_sql" type="button" value="SQL">
+        <input id="button_get_sql" type="button" value="zeige SQL">
 	</div>
 
     <!-- anzeigen der Rules -->
@@ -73,12 +73,13 @@
         });
     </script>
 
+    <!-- Übermittlung Rules zum Server -->
     <script type="text/javascript">
 
         $("#button_get_sql").click(function()
         {
             var a_rules = false, use_prepared_statements, pst_placeholder;
-            a_rules = $("#demo_rules1").jui_filter_rules("getRules", 0, []);
+            a_rules = $("#demo_rules").jui_filter_rules("getRules", 0, []);
 
             if(!a_rules) {
                 // show_modal($("#modal_dialog"), $("#modal_dialog_content"), "Rules error...");
@@ -111,7 +112,7 @@
 
             $.ajax({
                 type: 'POST',
-                url: "ajax/ajax_get_sql.php",
+                url: "src/ajax_create_sql.php",
                 data: {
                     a_rules: a_rules,
                     use_ps: use_prepared_statements,
@@ -122,7 +123,7 @@
                     var html = '';
 
                     if(data.hasOwnProperty("error")) {
-                        $("#demo_rules1")
+                        $("#demo_rules")
                                 .jui_filter_rules("markRuleAsError", data["error"]["element_rule_id"], true)
                                 .triggerHandler("onValidationError",
                                 {
@@ -130,12 +131,14 @@
                                     err_description: "Server error during filter converion..." + '\n\n' + data["error"]["error_message"]
                                 }
                         );
-                    } else {
+                    }
+                    else {
                         html += '<pre id="demo_code"><ul>';
                         html += '<li>SQL: \n\n' + data["sql"] + '\n\n</li>';
                         html += '<li>Bind params: \n\n' + JSON.stringify(data["bind_params"], null, '    ') + '</li>';
                         html += '</ul></pre>';
-                        show_modal($("#modal_dialog"), $("#modal_dialog_content"), html);
+
+                        $("#anzeige").html(html);
                     }
 
                 }

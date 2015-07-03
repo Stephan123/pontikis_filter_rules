@@ -8,14 +8,17 @@
  * @author Christos Pontikis http://www.pontikis.net
  * @license http://opensource.org/licenses/MIT MIT License
  **/
-class jui_filter_rules {
+class juiFilterRules {
 
 	/** @var bool Use prepared statements or not */
-	private $usePreparedStatements;
+	protected $usePreparedStatements;
+
 	/** @var string Prepared statements placeholder type ('question_mark' or 'numbered') */
 	private $pst_placeholder;
+
 	/** @var string RDBMS in use (one of 'MYSQLi', 'POSTGRES') */
-	private $rdbms;
+	protected $rdbms;
+
 	/**
 	 * @var array last_error
 	 *
@@ -25,19 +28,38 @@ class jui_filter_rules {
 	 * )
 	 *
 	 */
-	private $last_error;
+	protected $lastError;
 
-	/**
-	 * @param dacapo $ds
-	 * @param array $allowed_functions
-	 */
-	public function __construct(dacapo $ds, $allowed_functions = array()) {
-		$this->ds = $ds;
-		$this->allowed_functions = $allowed_functions;
-		$this->usePreparedStatements = $ds->use_pst;
-		$this->sql_placeholder = $ds->sql_placeholder;
-		$this->pst_placeholder = $ds->pst_placeholder;
-		$this->last_error = array(
+    /** @var Sparrow  */
+    protected $sparrow = null;
+
+    /** @var array  */
+    protected $allowedFunctions = array();
+
+    /** @var null */
+    protected $sqlPlaceholder = null;
+
+    /** @var bool */
+    protected $prepareStatementPlaceholder = null;
+
+    /**
+     * @param Sparrow $sparrow
+     * @param array $allowedFunctions
+     * @param bool $usePreparedStatement
+     * @param bool $sqlPlaceholder
+     * @param bool $prepareStatementPlaceholder
+     */
+	public function __construct(Sparrow $sparrow, $allowedFunctions = array(), $usePreparedStatement = false, $sqlPlaceholder = false, $prepareStatementPlaceholder = false)
+    {
+        // Datenbank
+		$this->sparrow = $sparrow;
+
+		$this->allowedFunctions = $allowedFunctions;
+		$this->usePreparedStatements = $usePreparedStatement;
+		$this->sqlPlaceholder = $sqlPlaceholder;
+		$this->prepareStatementPlaceholder = $prepareStatementPlaceholder;
+
+		$this->lastError = array(
 			'element_rule_id' => null,
 			'error_message' => null
 		);
@@ -46,18 +68,26 @@ class jui_filter_rules {
 	/**
 	 * @return array
 	 */
-	public function get_last_error() {
-		return $this->last_error;
+	public function getLastError()
+    {
+		return $this->lastError;
 	}
 
 
 	/**
 	 * @param array $a_functions
 	 */
-	public function set_allowed_functions($a_functions = array()) {
+    /**
+     * @param array $a_functions
+     * @return juiFilterRules
+     */
+	public function setAllowedFunctions($a_functions = array())
+    {
 		if(is_array($a_functions)) {
-			$this->allowed_functions = $a_functions;
+			$this->allowedFunctions = $a_functions;
 		}
+
+        return $this;
 	}
 
 
@@ -65,11 +95,12 @@ class jui_filter_rules {
 	 * Parse rules array from given JSON object and returns WHERE SQL clause and bind params array (used on prepared statements).
 	 * Recursion is used.
 	 *
-	 * @param array $a_rules The rules array
+	 * @param array $rollen The rules array
 	 * @param bool $is_group If current rule belogns to group (except first group)
 	 * @return array
 	 */
-	public function parse_rules($a_rules, $is_group = false) {
+	public function parseRules($rollen, $is_group = false)
+    {
 		static $sql;
 		static $bind_params = array();
 		static $bind_param_index = 1;
@@ -78,38 +109,50 @@ class jui_filter_rules {
 		if(is_null($sql)) {
 			$sql = 'WHERE ';
 		}
-		$a_len = count($a_rules);
 
-		foreach($a_rules as $i => $rule) {
-			if(!isset($rule['condition'][0])) {
+        // Anzahl der Rollen
+		$a_len = count($rollen);
+
+		foreach($rollen as $i => $rolle) {
+
+
+			if(!isset($rolle['condition'][0])) {
 				$sql .= PHP_EOL;
 
-				// parentheses
+				// Klammern
 				$sql .= ($is_group && $i == 0 ? '(' : '');
 
-				// condition
-				$sql .= $rule['condition']['field'];
+				// Bedingung
+				$sql .= $rolle['condition']['field'];
 
 				// operator
-				$sql .= $this->create_operator_sql($rule['condition']['operator']);
+				$sql .= $this->createOperatorSql($rolle['condition']['operator']);
 
-				// filter value
-				$filter_value_conversion_server_side = array_key_exists('filter_value_conversion_server_side', $rule) ? $rule['filter_value_conversion_server_side'] : null;
-				$filter_value = array_key_exists('filterValue', $rule['condition']) ? $rule['condition']['filterValue'] : null;
-				$filter_type = array_key_exists('filterType', $rule['condition']) ? $rule['condition']['filterType'] : null;
-				$number_type = array_key_exists('numberType', $rule['condition']) ? $rule['condition']['numberType'] : null;
+				// Filter Inhalt auf dem Server
+				$filter_value_conversion_server_side = array_key_exists('filter_value_conversion_server_side', $rolle) ? $rolle['filter_value_conversion_server_side'] : null;
 
-				$filter_value_sql = $this->create_filter_value_sql($rule['condition']['filterType'],
-					$rule['condition']['operator'],
+                // Inhalt des Filter
+				$filter_value = array_key_exists('filterValue', $rolle['condition']) ? $rolle['condition']['filterValue'] : null;
+
+                // Filter Typ
+				$filter_type = array_key_exists('filterType', $rolle['condition']) ? $rolle['condition']['filterType'] : null;
+
+                // Nummer Typ
+				$number_type = array_key_exists('numberType', $rolle['condition']) ? $rolle['condition']['numberType'] : null;
+
+                // Inhalt der SQL Filter
+				$filter_value_sql = $this->createFilterValueSql($rolle['condition']['filterType'],
+					$rolle['condition']['operator'],
 					$filter_value,
 					$filter_value_conversion_server_side,
-					array_key_exists('element_rule_id', $rule) ? $rule['element_rule_id'] : 'element_rule_id: not given');
+					array_key_exists('element_rule_id', $rolle) ? $rolle['element_rule_id'] : 'element_rule_id: not given');
 
+                // Verwendung prepaired Statement
 				if($this->usePreparedStatements) {
 
-					if(!in_array($rule['condition']['operator'], array('is_null', 'is_not_null'))) {
+					if(!in_array($rolle['condition']['operator'], array('is_null', 'is_not_null'))) {
 
-						if(in_array($rule['condition']['operator'], array('in', 'not_in'))) {
+						if(in_array($rolle['condition']['operator'], array('in', 'not_in'))) {
 							$sql .= '(';
 							$filter_value_len = count($filter_value);
 							for($v = 0; $v < $filter_value_len; $v++) {
@@ -120,19 +163,20 @@ class jui_filter_rules {
 								}
 
 								// set param type
-								$bind_param = $this->set_bind_param_type($filter_value[$v], $filter_type, $number_type);
+								$bind_param = $this->setBindParamType($filter_value[$v], $filter_type, $number_type);
 								array_push($bind_params, $bind_param);
 							}
 							$sql .= ')';
-						} else {
+						}
+                        else {
 
 							$sql .= $this->sql_placeholder;
 
-							if(in_array($rule['condition']['operator'], array('is_empty', 'is_not_empty'))) {
+							if(in_array($rolle['condition']['operator'], array('is_empty', 'is_not_empty'))) {
 								array_push($bind_params, '');
 							} else {
 								// set param type
-								$bind_param = $this->set_bind_param_type($filter_value_sql, $filter_type, $number_type);
+								$bind_param = $this->setBindParamType($filter_value_sql, $filter_type, $number_type);
 								array_push($bind_params, $bind_param);
 							}
 
@@ -140,11 +184,13 @@ class jui_filter_rules {
 
 					}
 
-				} else {
+				}
+                // normale SQL
+                else {
 
-					if(!in_array($rule['condition']['operator'], array('is_null', 'is_not_null'))) {
+					if(!in_array($rolle['condition']['operator'], array('is_null', 'is_not_null'))) {
 
-						if(in_array($rule['condition']['operator'], array('is_empty', 'is_not_empty'))) {
+						if(in_array($rolle['condition']['operator'], array('is_empty', 'is_not_empty'))) {
 							$sql .= "''";
 						} else {
 							$sql .= $filter_value_sql;
@@ -153,16 +199,18 @@ class jui_filter_rules {
 					}
 				}
 
-			} else {
-				$this->parse_rules($rule['condition'], true);
+			}
+            else {
+				$this->parseRules($rolle['condition'], true);
 			}
 
 			// logical operator (between rules)
-			$sql .= ($i < $a_len - 1 ? ' ' . $rule['logical_operator'] : '');
+			$sql .= ($i < $a_len - 1 ? ' ' . $rolle['logical_operator'] : '');
 
-			// parentheses
+			// Klammern
 			$sql .= ($is_group && $i == $a_len - 1 ? ')' : '');
 		}
+
 		return array('sql' => $sql, 'bind_params' => $bind_params);
 	}
 
@@ -175,16 +223,20 @@ class jui_filter_rules {
 	 * @param $number_type
 	 * @return mixed
 	 */
-	private function set_bind_param_type($bind_param, $filter_type, $number_type) {
+	protected function setBindParamType($bind_param, $filter_type, $number_type)
+    {
 		if($filter_type == 'number') {
 			if($number_type == 'integer') {
 				settype($bind_param, 'int');
-			} else {
+			}
+            else{
 				settype($bind_param, 'float');
 			}
-		} else {
+		}
+        else {
 			settype($bind_param, 'string');
 		}
+
 		return $bind_param;
 	}
 
@@ -198,12 +250,13 @@ class jui_filter_rules {
 	 * @param array|null $filter_value_conversion_server_side
 	 * @param string $element_rule_id
 	 * @return string|null
-	 */
-	private function create_filter_value_sql($filter_type, $operator_type, $a_values, $filter_value_conversion_server_side, $element_rule_id) {
-
-		$ds = $this->ds;
+     */
+	protected function createFilterValueSql($filter_type, $operator_type, $a_values, $filter_value_conversion_server_side, $element_rule_id)
+    {
+		$sparrow = $this->sparrow;
 		$res = '';
 
+        // Rückgabe null
 		if(in_array($operator_type, array('is_empty', 'is_not_empty', 'is_null', 'is_not_null'))) {
 			return null;
 		}
@@ -211,16 +264,21 @@ class jui_filter_rules {
 		// apply filter value conversion (if any)
 		$vlen = count($a_values);
 		if(is_array($filter_value_conversion_server_side)) {
+
+            // Serverseitige Funktion
 			$function_name = $filter_value_conversion_server_side['function_name'];
 
-			if(in_array($function_name, $this->allowed_functions)) {
+            // wenn serverseitige Funktion erlaubt !
+			if(in_array($function_name, $this->allowedFunctions)) {
 
 				$args = $filter_value_conversion_server_side['args'];
 				$arg_len = count($args);
 
 				for($i = 0; $i < $vlen; $i++) {
+
 					// create arguments values for this filter value
 					$conversion_args = array();
+
 					for($a = 0; $a < $arg_len; $a++) {
 						if(array_key_exists('filter_value', $args[$a])) {
 							array_push($conversion_args, $a_values[$i]);
@@ -229,14 +287,22 @@ class jui_filter_rules {
 							array_push($conversion_args, $args[$a]['value']);
 						}
 					}
+
+                    // ausführen der serverseitigen Funktion
 					// execute user function and assign return value to filter value
 					try {
+
+                        // Aufruf der Funktion
 						$a_values[$i] = call_user_func_array($function_name, $conversion_args);
-					} catch(Exception $e) {
-						$this->last_error = array(
+
+                    }
+                    // wenn Funktion nicht vorhanden
+                    catch(Exception $e) {
+						$this->lastError = array(
 							'element_rule_id' => $element_rule_id,
 							'error_message' => $e->getMessage()
 						);
+
 						break;
 					}
 				}
@@ -244,39 +310,55 @@ class jui_filter_rules {
 
 		}
 
+        // prepare Statements
 		if($this->usePreparedStatements) {
+
+            $test = 123;
+
 			if(in_array($operator_type, array('equal', 'not_equal', 'less', 'not_equal', 'less_or_equal', 'greater', 'greater_or_equal'))) {
 				$res = $a_values[0];
-			} else if(in_array($operator_type, array('begins_with', 'not_begins_with'))) {
+			}
+            elseif(in_array($operator_type, array('begins_with', 'not_begins_with'))) {
 				$res = $a_values[0] . '%';
-			} else if(in_array($operator_type, array('contains', 'not_contains'))) {
+			}
+            elseif(in_array($operator_type, array('contains', 'not_contains'))) {
 				$res = '%' . $a_values[0] . '%';
-			} else if(in_array($operator_type, array('ends_with', 'not_ends_with'))) {
+			}
+            elseif(in_array($operator_type, array('ends_with', 'not_ends_with'))) {
 				$res = '%' . $a_values[0];
-			} else if(in_array($operator_type, array('in', 'not_in'))) {
+			}
+            elseif(in_array($operator_type, array('in', 'not_in'))) {
 				for($i = 0; $i < $vlen; $i++) {
 					$res .= ($i == 0 ? '(' : '');
 					$res .= $a_values[$i];
 					$res .= ($i < $vlen - 1 ? ',' : ')');
 				}
 			}
-		} else {
+		}
+        // normale Rückgabe
+        else {
+
 			if(in_array($operator_type, array('equal', 'not_equal', 'less', 'not_equal', 'less_or_equal', 'greater', 'greater_or_equal'))) {
-				$res = ($filter_type == 'number' ? $a_values[0] : $ds->qstr($a_values[0]));
-			} else if(in_array($operator_type, array('begins_with', 'not_begins_with'))) {
-				$res = $ds->qstr($a_values[0] . '%');
-			} else if(in_array($operator_type, array('contains', 'not_contains'))) {
-				$res = $ds->qstr('%' . $a_values[0] . '%');
-			} else if(in_array($operator_type, array('ends_with', 'not_ends_with'))) {
-				$res = $ds->qstr('%' . $a_values[0]);
-			} else if(in_array($operator_type, array('in', 'not_in'))) {
+				$res = ($filter_type == 'number' ? $a_values[0] : $sparrow->quote($a_values[0]));
+			}
+            elseif(in_array($operator_type, array('begins_with', 'not_begins_with'))) {
+				$res = $sparrow->quote($a_values[0] . '%');
+			}
+            elseif(in_array($operator_type, array('contains', 'not_contains'))) {
+				$res = $sparrow->quote('%' . $a_values[0] . '%');
+			}
+            elseif(in_array($operator_type, array('ends_with', 'not_ends_with'))) {
+				$res = $sparrow->quote('%' . $a_values[0]);
+			}
+            elseif(in_array($operator_type, array('in', 'not_in'))) {
 				for($i = 0; $i < $vlen; $i++) {
 					$res .= ($i == 0 ? '(' : '');
-					$res .= ($filter_type == 'number' ? $a_values[$i] : $ds->qstr($a_values[$i]));
+					$res .= ($filter_type == 'number' ? $a_values[$i] : $sparrow->quote($a_values[$i]));
 					$res .= ($i < $vlen - 1 ? ',' : ')');
 				}
 			}
 		}
+
 		return $res;
 	}
 
@@ -286,7 +368,8 @@ class jui_filter_rules {
 	 * @param string $operator_type
 	 * @return string
 	 */
-	private function create_operator_sql($operator_type) {
+	protected function createOperatorSql($operator_type)
+    {
 		$operator = '';
 		switch($operator_type) {
 			case 'equal':
@@ -344,8 +427,9 @@ class jui_filter_rules {
 				$operator = 'IS NOT NULL';
 				break;
 		}
+
 		$operator = ' ' . $operator . ' ';
+
 		return $operator;
 	}
-
 }
