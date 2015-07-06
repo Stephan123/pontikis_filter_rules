@@ -161,7 +161,7 @@ $(function() {
                         filter_element: "select"
                     }
                 ],
-                lookup_values_ajax_url: "ajax/ajax_languages.php"
+                lookup_values_ajax_url: "ajax/languages.php"
             },
             {
                 filterName: "Company", "filterType": "number", "numberType": "integer", field: "company", filterLabel: "Company",
@@ -178,7 +178,7 @@ $(function() {
                 ]
             },
             {
-                filterName: "Country", "filterType": "text", field: "country", filterLabel: "Country code",
+                filterName: "Country", "filterType": "text", field: "country", filterLabel: "Country code (Ajax)",
                 excluded_operators: ["in", "not_in", "less", "less_or_equal", "greater", "greater_or_equal"],
                 filter_interface: [
                     {
@@ -190,7 +190,7 @@ $(function() {
                         filter_element_attributes: {type: "text", style: "width: 120px; margin-left: 5px; display: inline-block;"},
                         filter_widget: "autocomplete",
                         filter_widget_properties: {
-                            source: "ajax/ajax_countries.php",
+                            source: "ajax/countries.php",
                             minLength: 1,
                             select: function(event, ui) {
                                 $(this).prevAll("input").val(ui.item.id);

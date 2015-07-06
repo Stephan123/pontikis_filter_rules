@@ -33,6 +33,13 @@
     <!--  required from filters plugin -->
     <script type="text/javascript" src="moment/moment.js"></script>
 
+    <!-- Timepicker -->
+    <link rel="stylesheet" media="all" type="text/css" href="jqueryTimepicker/jquery-ui-timepicker-addon.css">
+    <script type="text/javascript" src="jqueryTimepicker/jquery-ui-timepicker-addon.js"></script>
+    <script type="text/javascript" src="jqueryTimepicker/i18n/jquery-ui-timepicker-addon-i18n.min.js"></script>
+    <script type="text/javascript" src="jquery-ui-sliderAccess.js"></script>
+
+
     <!-- definierte Rollen -->
     <script type="text/javascript" src="index.js"></script>
 </head>
@@ -53,21 +60,16 @@
             var a_rules = $("#demo_rules").jui_filter_rules("getRules", 0, []);
 
             if(!a_rules) {
-//                show_modal($("#modal_dialog"), $("#modal_dialog_content"), "Rules error...");
-
                 $("#anzeige").html('Keine Rollen definiert');
                 return false;
             }
 
             else if(a_rules.length == 0) {
-//                show_modal($("#modal_dialog"), $("#modal_dialog_content"), "No rules defined...");
-
                 $("#anzeige").html('Keine Rollen definiert');
                 return false;
             }
 
             var html = '<pre id="demo_code">' + JSON.stringify(a_rules, null, '    ') + '</pre>';
-            // show_modal($("#modal_dialog"), $("#modal_dialog_content"), html);
 
             $("#anzeige").html(html);
         });
@@ -82,14 +84,12 @@
             a_rules = $("#demo_rules").jui_filter_rules("getRules", 0, []);
 
             if(!a_rules) {
-                // show_modal($("#modal_dialog"), $("#modal_dialog_content"), "Rules error...");
                 $("#anzeige").html('Rules Fehler');
 
                 return false;
             }
 
             if(a_rules.length == 0) {
-                // show_modal($("#modal_dialog"), $("#modal_dialog_content"), "No rules defined...");
                 $("#anzeige").html('keine Rollen definiert');
 
                 return false;

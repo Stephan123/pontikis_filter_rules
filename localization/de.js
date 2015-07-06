@@ -9,10 +9,10 @@ var rsc_jui_fr = {
 
     no_filters_found: "kein Filter definiert",
 
-    rules_group_AND: "Rollen gruppieren mit 'und'",
-    rules_group_OR: "Rollen gruppieren mit 'oder'",
+    rules_group_AND: "Bedingungen verknüpfen mit 'and'",
+    rules_group_OR: "Bedingungen verknüpffen mit 'or'",
 
-    rule: "Rolle",
+    rule: "Bedingung",
     group: "Gruppe",
     tools_please_select: "&raquo;",
     rule_insert_before: "einfügen davor",
