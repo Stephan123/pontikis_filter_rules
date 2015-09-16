@@ -105,9 +105,9 @@ class juiFilterRules {
 		static $bind_params = array();
 		static $bind_param_index = 1;
 
-		// WHERE clause
+		// Beginn WHERE clause
 		if(is_null($sql)) {
-			$sql = 'WHERE ';
+			$sql = ' ';
 		}
 
         // Anzahl der Rollen

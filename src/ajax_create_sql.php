@@ -38,7 +38,6 @@ $allowedFunctions = array(
 $sparrow = new Sparrow();
 $sparrow->setDb($datenbankZugang);
 
-// Ausgabe der SQL
 $filterRules = new juiFilterRules($sparrow, $allowedFunctions, $usePst, false, $pstPlaceholder);
 
 // Übergabe der Liste der erlaubten zusätzlichen Funktionen durch den Server
